@@ -1,0 +1,168 @@
+- name: Install apache and php
+  ansible.builtin.dnf:
+    name: "{{ web_packages }}"
+    state: present
+
+- name: Ensure httpd service is enabled
+  ansible.builtin.service:
+    name: httpd
+    state: started
+    enabled: true
+
+- name: Ensure http service is allowed in frirewalld
+  ansible.posix.firewalld:
+    service: http
+    permanent: true
+    immediate: true
+    state: enabled
+
+# MediaWiki server
+- name: Download mediawiki tar.gz
+  ansible.builtin.get_url:
+    url: "{{ get_mediawiki_url }}"
+    dest: "{{ mediawiki_temp_src }}"
+    mode: "0644"
+
+- name: Ensure mediawiki directory exists
+  ansible.builtin.file:
+    path: "{{ mediawiki_path }}"
+    state: directory
+    owner: apache
+    group: apache
+
+- name: Extract mediawiki tar.gz
+  ansible.builtin.unarchive:
+    src: "{{ mediawiki_temp_src }}"
+    dest: "{{ mediawiki_path }}"
+    remote_src: true
+    extra_opts:
+    - --strip-components=1 # extract here, instead of additional folder
+    creates: "{{ mediawiki_path }}/includes"
+
+- name: Change ownership of mediawiki files
+  ansible.builtin.file:
+    path: "{{ mediawiki_path }}"
+    owner: apache
+    group: apache
+    recurse: true
+
+- name: Run mediawiki installation
+  ansible.builtin.command:
+    cmd: >
+      php maintenance/install.php
+        --dbtype=mysql
+        --dbserver={{ db_host }}
+        --dbname={{ wiki_db_name }}
+        --dbuser={{ wiki_db_user }}
+        --dbpass={{ wiki_db_password }}
+        --server=http://{{ wiki_domain }}
+        --scriptpath=""
+        --pass={{ wiki_admin_password }}
+        "NexCore Wiki" "{{ wiki_admin_user }}"
+    chdir: "{{ mediawiki_path }}"
+  args:
+    creates: "{{ mediawiki_path }}/LocalSettings.php"
+  # become_user: apache
+
+- name: Change ownership of mediawiki LocalSettings.php
+  ansible.builtin.file:
+    path: "{{ mediawiki_path }}/LocalSettings.php"
+    owner: apache
+    group: apache
+    mode: "0640"
+
+- name: Deploy mediawiki wiki.conf
+  ansible.builtin.template:
+    src: wiki.conf.j2
+    dest: /etc/httpd/conf.d/wiki.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart httpd
+
+# WordPress server
+
+- name: Download wordpress tar.gz
+  ansible.builtin.get_url:
+    url: "{{ get_wordpress_url }}"
+    dest: "{{ wordpress_temp_src }}"
+    mode: "0644"
+
+- name: Ensure wordpress directory exists
+  ansible.builtin.file:
+    path: "{{ wordpress_path }}"
+    state: directory
+    owner: apache
+    group: apache
+
+- name: Extract wordoress tar.gz
+  ansible.builtin.unarchive:
+    src: "{{ wordpress_temp_src }}"
+    dest: "{{ wordpress_path }}"
+    remote_src: true
+    extra_opts:
+    - --strip-components=1
+    creates: "{{ wordpress_path }}/wp-load.php"
+
+- name: Set ownership of WordPress files
+  ansible.builtin.file:
+    path: "{{ wordpress_path }}"
+    owner: apache
+    group: apache
+    recurse: true
+
+- name: Install WP-CLI
+  ansible.builtin.get_url:
+    url: "{{ wp_cli_url }}"
+    dest: "{{ wp_cli_path }}"
+    mode: "0755"
+
+- name: Generate wp-config.php
+  ansible.builtin.command:
+    cmd: >
+      {{ wp_cli_path }} config create --path={{ wordpress_path }} --dbname={{ wordpress_db_name }} --dbuser={{ wordpress_db_user }} --dbpass={{ wordpress_db_password }} --dbhost={{ db_host }} --skip-check
+  args:
+    creates: "{{ wordpress_path }}/wp-config.php"
+
+- name: Check whether WordPress is already installed
+  ansible.builtin.command:
+    cmd: "{{ wp_cli_path }} core is-installed --path={{ wordpress_path }}"
+  register: wordpress_allready_installed
+  failed_when: false
+  changed_when: false
+
+- name: Run WordPress installation
+  ansible.builtin.command:
+    cmd: >
+      {{ wp_cli_path }} core install --path={{ wordpress_path }} --url=http://{{ wordpress_domain }} --title="NexCore Blog" --admin_user={{ wordpress_admin_user }} --admin_password={{ wordpress_admin_password }} --admin_email=admin@{{ domain_name }}
+  when: wordpress_allready_installed.rc != 0
+
+- name: Change ownership of wp-config.php file
+  ansible.builtin.file:
+    path: "{{ wordpress_path }}/wp-config.php"
+    owner: apache
+    group: apache
+    mode: "0640"
+
+- name: Deploy www.conf for wordpress
+  ansible.builtin.template:
+    src: www.conf.j2
+    dest: /etc/httpd/conf.d/www.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart httpd
+
+- name: Ensure httpd service can connect to remote db
+  ansible.posix.seboolean:
+    name: httpd_can_network_connect_db
+    state: true
+    persistent: true
+
+- name: Restore selinux context on web root directories
+  ansible.builtin.command:
+    cmd: "restorecon -R {{ item }}"
+  loop:
+  - "{{ mediawiki_path }}"
+  - "{{ wordpress_path }}"
+  changed_when: false

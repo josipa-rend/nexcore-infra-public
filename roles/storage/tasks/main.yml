@@ -1,0 +1,88 @@
+---
+- name: Install lvm and nfs packages
+  ansible.builtin.dnf:
+    name:
+    - lvm2
+    - nfs-utils
+    state: present
+
+- name: Create volume group
+  community.general.lvg:
+    vg: "{{ vg_name }}"
+    pvs: "{{ shared_disk }}"
+    state: present
+
+- name: Create logical volume
+  community.general.lvol:
+    vg: "{{ vg_name }}"
+    lv: "{{ lv_name }}"
+    size: "{{ lv_size }}"
+    state: present
+
+- name: Create filesystem on logical volume
+  ansible.builtin.filesystem:
+    dev: "/dev/{{ vg_name }}/{{ lv_name }}"
+    fstype: "{{ fs_type }}"
+
+- name: Create directory for mount
+  ansible.builtin.file:
+    path: "{{ mount_path }}"
+    state: directory
+
+- name: Mount shared logical volume
+  ansible.posix.mount:
+    path: "{{ mount_path }}"
+    src: "/dev/{{ vg_name }}/{{ lv_name }}"
+    fstype: "{{ fs_type }}"
+    state: mounted # ako nema zapisa u /etc/fstab doda se
+
+- name: Ensure mount point is created
+  ansible.builtin.file:
+    path: "{{ mount_path }}"
+    state: directory
+    owner: root
+    group: dev
+    mode: "2775"
+
+- name: Deploy nfs exports configuration file
+  ansible.builtin.template:
+    src: exports.j2
+    dest: /etc/exports
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload exports
+
+- name: Ensure nfs service is allowed in firewalld
+  ansible.posix.firewalld:
+    service: nfs
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Ensure nfs server service is enabled
+  ansible.builtin.service:
+    name: nfs-server
+    state: started
+    enabled: true
+
+# BR-06
+
+- name: Ensure directories for users exists
+  ansible.builtin.file:
+    path: "{{ mount_users_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create user subdirs on nfs with ownership
+  ansible.builtin.file:
+    path: "{{ mount_users_path }}/{{ item.username }}"
+    state: directory
+    owner: "{{ item.username }}"
+    group: "{{ item.groups }}"
+    mode: "0700"
+  loop: "{{ users }}"
+  loop_control:
+    label: "{{ item.username }}"

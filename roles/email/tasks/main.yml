@@ -1,0 +1,39 @@
+---
+- name: Install postfix
+  ansible.builtin.dnf:
+    name:
+    - postfix
+    state: present
+
+- name: Deploy main.cf file
+  ansible.builtin.template:
+    src: main.cf.j2
+    dest: /etc/postfix/main.cf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart postfix
+
+- name: Ensure postfix service is enabled
+  ansible.builtin.service:
+    name: postfix
+    state: started
+    enabled: true
+
+- name: Ensure smtp is allowed in firewalld
+  ansible.posix.firewalld:
+    service: smtp
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Create local mailbox files for users
+  ansible.builtin.file:
+    path: "/var/spool/mail/{{ item.username }}"
+    state: touch
+    owner: "{{ item.username }}"
+    group: mail
+    mode: "0660"
+    access_time: preserve
+    modification_time: preserve
+  loop: "{{ users }}"

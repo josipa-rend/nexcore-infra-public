@@ -1,0 +1,7 @@
+{# /external   -rw,sync,fstype=nfs4    {{ nfs_server_ip }}:{{ mount_path }} #}
+{% if inventory_hostname not in groups['storage'] %}
+{{ mount_path }} -rw {{ nfs_server_ip }}:{{ mount_path }}
+{% endif %}
+{% for u in users %}
+/home/{{ u.username }}/{{ company_share_dir }} -rw {{ nfs_server_ip }}:{{ mount_users_path }}/{{ u.username }}
+{% endfor %}

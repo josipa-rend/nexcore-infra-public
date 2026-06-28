@@ -1,0 +1,54 @@
+---
+- name: Install rsyslog
+  ansible.builtin.dnf:
+    name: rsyslog
+    state: present
+
+# Sending
+
+- name: Deploy rsyslog configuration for log sender
+  ansible.builtin.template:
+    src: rsyslog-send.conf.j2
+    dest: /etc/rsyslog.d/90-forward.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: inventory_hostname == log_sender_host
+  notify: Restart rsyslog
+
+# Receiving
+
+- name: Deploy rsyslog configuration for log receiver
+  ansible.builtin.template:
+    src: rsyslog-receive.conf.j2
+    dest: /etc/rsyslog.d/10-receive.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: inventory_hostname == log_receiver_host
+  notify: Restart rsyslog
+
+- name: Ensure rsyslog TCP port ia allowed in firewalld on receiver
+  ansible.posix.firewalld:
+    port: "{{ rsyslog_port }}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled
+  when: inventory_hostname == log_receiver_host
+
+- name: Create directory for received logs
+  ansible.builtin.file:
+    path: /var/log/remote
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: inventory_hostname == log_receiver_host
+
+#
+
+- name: Ensure rsyslog is started and enabled
+  ansible.builtin.service:
+    name: rsyslog
+    state: started
+    enabled: true

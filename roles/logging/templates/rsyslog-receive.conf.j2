@@ -1,0 +1,9 @@
+module(load="imtcp")
+input(type="imtcp" port="{{ rsyslog_port }}")
+
+template(name="ReceivedLogs" type="string" string="/var/log/remote/{{ log_sender_host }}.log")
+
+if $fromhost-ip == '{{ hostvars[log_sender_host]['ansible_default_ipv4']['address'] }}' then {
+    action(type="omfile" dynaFile="ReceivedLogs")
+    stop
+}

@@ -1,0 +1,23 @@
+options {
+    listen-on port 53 { 127.0.0.1; {{ ansible_default_ipv4.address }}; };
+    listen-on-v6 port 53 { ::1; };
+    directory       "/var/named";
+    dump-file       "/var/named/data/cache_dump.db";
+    statistics-file "/var/named/data/named_stats.txt";
+    memstatistics-file "/var/named/data/named_mem_stats.txt";
+    recursing-file  "/var/named/data/named.recursing";
+    allow-query     { localhost; {{ ansible_default_ipv4.network }}/24; };
+    recursion yes;
+    dnssec-validation yes;
+    managed-keys-directory "/var/named/dynamic";
+    pid-file "/run/named/named.pid";
+    session-keyfile "/run/named/session.key";
+};
+
+zone "{{ dns_zone }}" IN {
+    type master;
+    file "{{ dns_zone_file }}";
+};
+
+include "/etc/named.rfc1912.zones";
+include "/etc/named.root.key";

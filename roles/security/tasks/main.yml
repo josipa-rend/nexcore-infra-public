@@ -1,0 +1,27 @@
+---
+- name: Ensure selinux is in enforcing mode
+  ansible.posix.selinux:
+    policy: targeted
+    state: enforcing
+
+- name: Ensure firewalld is enabled
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Set correct selinux file context for mediawiki dir
+  community.general.sefcontext:
+    target: "{{ mediawiki_path }}(/.*)?"
+    setype: httpd_sys_rw_content_t
+    state: present
+  when: inventory_hostname in groups['web']
+  notify: Restore selinux context web
+
+- name: Set correct selinux file context for wordpress dir
+  community.general.sefcontext:
+    target: "{{ wordpress_path }}(/.*)?"
+    setype: httpd_sys_rw_content_t
+    state: present
+  when: inventory_hostname in groups['web']
+  notify: Restore selinux context web

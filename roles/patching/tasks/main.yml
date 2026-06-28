@@ -1,0 +1,58 @@
+---
+- name: Ensure packages are installed
+  ansible.builtin.dnf:
+    name:
+    - logrotate
+    - yum-utils # za needs-restaring u patch skripti
+    state: present
+
+- name: Deploy health check script
+  ansible.builtin.template:
+    src: health-check.sh.j2
+    dest: "{{ health_check_script_path }}"
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Schedule daily health check script run
+  ansible.builtin.cron:
+    name: "Daily health check"
+    minute: "0"
+    hour: "3"
+    job: "{{ health_check_script_path }} >/dev/null 2>&1"
+    user: root
+
+- name: Schedule weekly package cache cleanup
+  ansible.builtin.cron:
+    name: "Weekly cache cleanup"
+    minute: "0"
+    hour: "4"
+    weekday: "0"
+    job: "dnf clean all >/dev/null 2>&1"
+    user: root
+
+- name: Deploy patch run script
+  ansible.builtin.template:
+    src: patch.sh.j2
+    dest: "{{ patch_script_path }}"
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Schedule weekly patch run
+  ansible.builtin.cron:
+      name: "Weekly patch run"
+      minute: "30"
+      hour: "4"
+      weekday: "0"
+      job: "{{ patch_script_path }} >/dev/null 2>&1"
+      user: root
+
+# Log rotation
+- name: Deploy logrotate configuration file
+  ansible.builtin.template:
+    src: nexcore-health-logrotate.j2
+    dest: /etc/logrotate.d/nexcore-health
+    owner: root
+    group: root
+    mode: "0644"

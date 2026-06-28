@@ -1,0 +1,3 @@
+---
+mariadb_bind_address: "{{ hostvars['serverb']['ansible_default_ipv4']['address'] }}"
+db_allowed_host_address: "{{ hostvars['servera']['ansible_default_ipv4']['address'] }}"

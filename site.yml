@@ -1,0 +1,92 @@
+---
+- name: "[BR-05] configure User and access management"
+  hosts: all
+  become: true
+  roles:
+   - users
+  # tags:
+  #  - skip
+
+- name: "[BR-04] configure DNS on all hosts"
+  hosts: all
+  become: true
+  tasks:
+   - name: Configure DNS resolution on hosts
+     ansible.builtin.import_role:
+      name: dns
+      tasks_from: client
+  tags:
+   - skip
+
+- name: "[BR-04] configure DNS server"
+  hosts: dns
+  become: true
+  roles:
+   - dns
+  tags:
+   - skip
+
+- name: "[BR-01, BR-02] Database configuration"
+  hosts: db
+  become: true
+  roles:
+   - database
+  tags:
+   -skip
+
+- name: "[BR-01, BR-02] Knowledge base and company website"
+  hosts: web
+  become: true
+  roles:
+   - web
+  tags:
+   - skip
+
+- name: "[BR-03] Configure shared file storage"
+  hosts: storage
+  become: true
+  roles:
+   - storage
+  tags:
+   - skip
+
+- name: "[BR-03] Configure automount"
+  hosts: all
+  become: true
+  roles:
+   - automount
+  tags:
+   - skip
+
+- name: "[BR-07] configure mail server"
+  hosts: email
+  become: true
+  roles:
+   - email
+
+- name: "[BR-07] configure mail client"
+  hosts: all
+  become: true
+  tasks:
+   - name: Configure mail client
+     ansible.builtin.import_role:
+       name: email
+       tasks_from: client
+
+- name: "[BR-08] Security hardening"
+  hosts: all
+  become: true
+  roles:
+   - security
+
+- name: "[BR-09] Centralized logging"
+  hosts: all
+  become: true
+  roles:
+   - logging
+
+- name: "[BR-10] Automated maintenance"  
+  hosts: all
+  become: true
+  roles:
+   - patching

@@ -1,0 +1,88 @@
+---
+# User and access management
+files_dir: "{{ playbook_dir }}/files"
+ssh_keys_dir: "{{ files_dir }}/ssh_keys"
+ssh_public_key_hardcoded: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIARdE48Wt9B8L6FzbPC4xSb6ruW0WNMsILeph03nyNz nexcore-rhcsa-demo-key"
+
+users:
+- username: ops01
+  groups: ops
+  sudo_access: true
+  ssh_pub_key: "{{ ssh_public_key_hardcoded }}"
+- username: dev01
+  groups: dev
+  sudo_access: false
+  ssh_pub_key: "{{ ssh_public_key_hardcoded }}"
+- username: dev02
+  groups: dev
+  sudo_access: false
+  ssh_pub_key: "{{ ssh_public_key_hardcoded }}"
+- username: mkt01
+  groups: marketing
+  sudo_access: false
+  ssh_pub_key: "{{ ssh_public_key_hardcoded }}"
+
+# DNS
+domain_name: nexcore.local
+dns_zone: "{{ domain_name }}"
+mail_hostname: "mail.{{ domain_name }}"
+dns_server_ip: "{{ hostvars['servera']['ansible_host']}}"
+#dns_allowed_network: "172.25.250.0/24"
+dns_zone_file: "/var/named/{{ dns_zone }}.zone"
+
+# MediaWiki
+wiki_admin_user: wikiadmin
+wiki_admin_password: "wikiadmin123"
+
+mediawiki_path: "/var/www/mediawiki"
+
+wiki_db_name: wikidb
+wiki_db_user: wikiuser
+wiki_db_password: "wikiuser"
+
+# DB
+db_root_user: "root"
+db_root_password: "root"
+
+# WordPress
+wordpress_admin_user: wpadmin
+wordpress_admin_password: "wpadmin123"
+
+wordpress_path: "/var/www/wordpress"
+
+wordpress_db_name: wpdb
+wordpress_db_user: wpuser
+wordpress_db_password: "wpuser"
+
+# storage
+shared_disk: /dev/vdb
+vg_name: data_vg
+lv_name: shared_lv
+fs_type: xfs
+lv_size: 4G
+mount_path: /mnt/shared
+mount_users_path: "{{ mount_path }}/users"
+company_share_dir: Company_Share
+shared_users_subpath: users
+
+# NFS
+nfs_server_ip: "{{ hostvars['serverb']['ansible_default_ipv4']['address'] }}"
+
+login_unix_socket_file: "/var/lib/mysql/mysql.sock"
+
+# email
+relayhost: "{{ hostvars['servera']['ansible_default_ipv4']['address'] }}"
+
+# logging
+rsyslog_port: 514
+log_receiver_host: servera
+log_sender_host: serverb
+
+#patching
+# provjeri
+health_log_path: /var/log/nexcore-health.log
+
+admin_scripts_path: /usr/local/sbin
+health_check_script_path: "{{ admin_scripts_path }}/nexcore-healthcheck.sh"
+patch_script_path: "{{ admin_scripts_path }}/nexcore-patch.sh"
+ops_01_email: "ops01@{{ domain_name }}"

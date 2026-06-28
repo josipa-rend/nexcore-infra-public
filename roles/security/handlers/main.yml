@@ -1,0 +1,7 @@
+---
+- name: Restore selinux context web
+  ansible.builtin.command: "restorecon -R {{ item }}"
+  loop:
+  - "{{ mediawiki_path }}"
+  - "{{ wordpress_path }}"
+  changed_when: false

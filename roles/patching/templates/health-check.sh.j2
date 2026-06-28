@@ -1,0 +1,10 @@
+#!/bin/bash
+
+{
+    echo "Date: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "Hostname: $(hostname)"
+    echo "Uptime: $(uptime -p)"
+    echo "Disk usage:"
+    df -h --output=target,pcent,avail
+    echo
+} | tee -a  {{ health_log_path }} | mail -s "[Nexcore][$(hostname)] Daily health check summary" {{ ops_01_email }}

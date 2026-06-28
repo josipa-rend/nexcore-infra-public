@@ -1,0 +1,11 @@
+{
+    "ansible.python.interpreterPath": "/bin/python",
+    "editor.quickSuggestions": {
+        "comments": "on",
+        "strings": "on",
+        "other": "on"
+    },
+    "editor.suggestOnTriggerCharacters": true,
+    "editor.acceptSuggestionOnEnter": "off",
+    "editor.tabCompletion": "on"
+}

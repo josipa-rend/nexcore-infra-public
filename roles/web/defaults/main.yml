@@ -1,0 +1,11 @@
+---
+web_packages:
+  - httpd
+  - php
+  - php-mysqlnd
+  - php-gd
+  - php-xml
+  - php-mbstring
+  - php-json
+  - php-opcache
+  - php-intl

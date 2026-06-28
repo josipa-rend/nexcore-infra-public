@@ -1,0 +1,14 @@
+---
+- name: Install mail client
+  ansible.builtin.dnf:
+    name: s-nail
+    state: present
+
+- name: Deploya mail client relay
+  ansible.builtin.template:
+    src: mail.rc.j2
+    # dest: /etc/mail.rc
+    dest: /etc/s-nail.rc
+    owner: root
+    group: root
+    mode: "0644"

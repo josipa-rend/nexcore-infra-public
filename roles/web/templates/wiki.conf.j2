@@ -1,0 +1,12 @@
+<VirtualHost *:{{ httpd_port }}>
+    ServerName {{ wiki_domain }}
+    DocumentRoot {{ mediawiki_path }}
+
+    <Directory "{{ mediawiki_path }}">
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog /var/log/httpd/wiki_error.log
+    CustomLog /var/log/httpd/wiki_access.log combined
+</VirtualHost>

@@ -1,0 +1,18 @@
+$TTL 86400
+@   IN  SOA   servera.{{ dns_zone }}. admin.{{ dns_zone }}. (
+        2026062201  ; Serial
+        3600              ; Refresh
+        1800              ; Retry
+        604800            ; Expire
+        86400 )           ; Minimum TTL
+
+@               IN  NS      servera.{{ dns_zone }}.
+
+servera         IN  A       {{ hostvars['servera']['ansible_host'] }}
+serverb         IN  A       {{ hostvars['serverb']['ansible_host'] }}
+
+wiki            IN  CNAME   servera.{{ dns_zone }}.
+www             IN  CNAME   servera.{{ dns_zone }}.
+mail            IN  CNAME   servera.{{ dns_zone }}.
+
+@               IN  MX  10  mail.{{ dns_zone }}.

@@ -1,0 +1,14 @@
+wiki_domain: "wiki.{{ domain_name }}"
+wordpress_domain: "www.{{ domain_name }}"
+httpd_port: 80
+
+get_mediawiki_url: "https://releases.wikimedia.org/mediawiki/1.41/mediawiki-1.41.3.tar.gz"
+mediawiki_temp_src: "/tmp/mediawiki.tar.gz"
+
+get_wordpress_url: "https://wordpress.org/latest.tar.gz"
+wordpress_temp_src: "/tmp/wordpress-latest.tar.gz"
+
+db_host: "{{ hostvars['serverb']['ansible_default_ipv4']['address'] }}"
+
+wp_cli_url: "https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
+wp_cli_path: /usr/local/bin/wp
