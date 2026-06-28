@@ -104,13 +104,6 @@
     - --strip-components=1
     creates: "{{ wordpress_path }}/wp-load.php"
 
-- name: Set ownership of WordPress files
-  ansible.builtin.file:
-    path: "{{ wordpress_path }}"
-    owner: apache
-    group: apache
-    recurse: true
-
 - name: Install WP-CLI
   ansible.builtin.get_url:
     url: "{{ wp_cli_url }}"
@@ -136,6 +129,15 @@
     cmd: >
       {{ wp_cli_path }} core install --path={{ wordpress_path }} --url=http://{{ wordpress_domain }} --title="NexCore Blog" --admin_user={{ wordpress_admin_user }} --admin_password={{ wordpress_admin_password }} --admin_email=admin@{{ domain_name }}
   when: wordpress_allready_installed.rc != 0
+
+
+- name: Set ownership of WordPress files
+  ansible.builtin.file:
+    path: "{{ wordpress_path }}"
+    state: directory
+    owner: apache
+    group: apache
+    recurse: true
 
 - name: Change ownership of wp-config.php file
   ansible.builtin.file:
