@@ -26,7 +26,7 @@ users:
 domain_name: nexcore.local
 dns_zone: "{{ domain_name }}"
 mail_hostname: "mail.{{ domain_name }}"
-dns_server_ip: "{{ hostvars['servera']['ansible_host']}}"
+dns_server_ip: "{{ hostvars['servera']['ansible_default_ipv4']['address'] }}"
 #dns_allowed_network: "172.25.250.0/24"
 dns_zone_file: "/var/named/{{ dns_zone }}.zone"
 
@@ -79,7 +79,6 @@ log_receiver_host: servera
 log_sender_host: serverb
 
 #patching
-# provjeri
 health_log_path: /var/log/nexcore-health.log
 
 admin_scripts_path: /usr/local/sbin

@@ -8,8 +8,8 @@ $TTL 86400
 
 @               IN  NS      servera.{{ dns_zone }}.
 
-servera         IN  A       {{ hostvars['servera']['ansible_host'] }}
-serverb         IN  A       {{ hostvars['serverb']['ansible_host'] }}
+servera         IN  A       {{ hostvars['servera']['ansible_default_ipv4']['address'] }}
+serverb         IN  A       {{ hostvars['serverb']['ansible_default_ipv4']['address'] }}
 
 wiki            IN  CNAME   servera.{{ dns_zone }}.
 www             IN  CNAME   servera.{{ dns_zone }}.
